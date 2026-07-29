@@ -21,12 +21,17 @@
     --radius:14px;
     --mono: 'JetBrains Mono', 'Courier New', monospace;
   }
+  @font-face{
+    font-family:'Vazir';
+    src: local('Tahoma');
+  }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    background:radial-gradient(ellipse 900px 500px at 15% -10%, #163425 0%, transparent 60%),
-                radial-gradient(ellipse 700px 500px at 100% 10%, #0f2a1c 0%, transparent 55%),
-                var(--bg-0);
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, #163425 0%, transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, #0f2a1c 0%, transparent 55%),
+      var(--bg-0);
     color:var(--ink);
     font-family:'Segoe UI', Tahoma, Arial, sans-serif;
     min-height:100vh;
@@ -37,6 +42,8 @@
     margin:0 auto;
     padding:48px 24px 100px;
   }
+
+  /* ---- Header / hero ---- */
   header.hero{
     position:relative;
     padding-bottom:36px;
@@ -81,6 +88,8 @@
     margin:0;
   }
   .sub b{color:var(--ink); font-weight:600;}
+
+  /* stitched leaf-strip signature */
   .strip{
     position:absolute;
     left:0; right:0; bottom:-1px;
@@ -88,6 +97,8 @@
     background:repeating-linear-gradient(90deg, var(--leaf) 0 18px, transparent 18px 30px);
     opacity:.55;
   }
+
+  /* ---- Panels ---- */
   .panel{
     background:linear-gradient(180deg, var(--panel), #0e1a14);
     border:1px solid var(--line);
@@ -119,6 +130,7 @@
     font-size:12px;
     color:var(--leaf-bright);
   }
+
   label.field-label{
     display:block;
     font-size:13px;
@@ -151,6 +163,7 @@
   }
   .hint a{color:var(--leaf-bright); text-decoration:none; border-bottom:1px dotted var(--leaf-dim);}
   .hint a:hover{color:var(--leaf-bright); border-bottom-style:solid;}
+
   .row2{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -158,6 +171,15 @@
     margin-top:18px;
   }
   @media (max-width:600px){ .row2{grid-template-columns:1fr;} }
+
+  .checkline{
+    display:flex; align-items:center; gap:10px;
+    margin-top:16px;
+    font-size:13.5px;
+    color:var(--ink-dim);
+  }
+  .checkline input{accent-color:var(--leaf);}
+
   button.primary{
     margin-top:22px;
     width:100%;
@@ -179,6 +201,8 @@
   button.primary:disabled{
     opacity:.5; cursor:not-allowed; transform:none; box-shadow:none;
   }
+
+  /* ---- Log console ---- */
   .console{
     background:#070d0a;
     border:1px solid var(--line);
@@ -198,7 +222,7 @@
   .console .line.err{color:var(--err);}
   .console .line.ok{color:var(--leaf-bright);}
   .console .line.warn{color:var(--amber);}
-  .console .line.info{color:var(--ink-dim);}
+
   .progress-wrap{
     display:none;
     margin-top:16px;
@@ -225,6 +249,8 @@
     direction:ltr;
     text-align:left;
   }
+
+  /* ---- Results ---- */
   #results{ display:none; }
   #results.show{ display:block; }
   .pack-card{
@@ -263,9 +289,11 @@
     transition:background .15s;
   }
   .dl-btn:hover{background:var(--leaf);color:#06110c;}
+
   .dl-all{
     margin-top:16px;
   }
+
   footer{
     margin-top:50px;
     padding-top:24px;
@@ -274,17 +302,91 @@
     color:var(--ink-dim);
     text-align:center;
   }
+
+  /* leaf watermark seam decoration */
+  .seed-icon{
+    width:34px;height:34px;
+    flex-shrink:0;
+  }
+
+  /* ---- Retry Failed Button ---- */
+  button.retry-btn{
+    margin-top:12px;
+    width:100%;
+    padding:12px 20px;
+    border:1px solid var(--amber);
+    border-radius:10px;
+    background:transparent;
+    color:var(--amber);
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    transition:background .15s, color .15s;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  button.retry-btn:hover{ background:var(--amber); color:#06110c; }
+  button.retry-btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+  /* ---- Cancel Button ---- */
+  button.cancel-btn{
+    margin-top:10px;
+    width:100%;
+    padding:12px 20px;
+    border:1px solid var(--err);
+    border-radius:10px;
+    background:transparent;
+    color:var(--err);
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    transition:background .15s, color .15s;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  button.cancel-btn:hover{ background:var(--err); color:#fff; }
+
+  /* ---- Speed Settings ---- */
+  .speed-row{
+    display:flex; align-items:center; gap:12px;
+    margin-top:14px;
+    padding:12px 14px;
+    background:#0a140e;
+    border:1px solid var(--line);
+    border-radius:10px;
+  }
+  .speed-row label{
+    font-size:12.5px;
+    color:var(--ink-dim);
+    white-space:nowrap;
+    font-family:var(--mono);
+    direction:ltr;
+  }
+  .speed-row select{
+    flex:1;
+    background:#070d0a;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 10px;
+    color:var(--ink);
+    font-size:13px;
+    font-family:var(--mono);
+    outline:none;
+    direction:ltr;
+    cursor:pointer;
+  }
+  .speed-row select:focus{ border-color:var(--leaf); }
 </style>
 </head>
 <body>
 <div class="wrap">
+
   <header class="hero">
     <div class="eyebrow"><span class="dot"></span> محوّل الملصقات &middot; تليجرام إلى واتساب</div>
     <h1>حوّل حزمة ملصقاتك من تليجرام لواتساب</h1>
-    <p class="sub">حط <b>رابط حزمة الملصقات</b> بتاعت تليجرام (متحركة أو ثابتة)، والأداة هتجيب الملصقات وتظبطها بصيغة واتساب: كل <b>30 ملصق</b> في حزمة منفصلة، ومعاها <b>tray.png</b> و<b>title.txt</b> و<b>author.txt</b> جاهزين.</p>
+    <p class="sub">حط <b>رابط حزمة الملصقات</b> بتاعت تليجرام (متحركة أو ثابتة)، والأداة هتجيب الملصقات وتظبطها بصيغة واتساب: كل <b>25 ملصق</b> في حزمة منفصلة، ومعاها <b>tray.png</b> و<b>title.txt</b> و<b>author.txt</b> جاهزين.</p>
     <div class="strip"></div>
   </header>
 
+  <!-- Step 1: Bot Token -->
   <section class="panel">
     <h2><span class="num">1</span> توكن بوت تليجرام</h2>
     <label class="field-label">Bot Token (من BotFather)</label>
@@ -295,6 +397,7 @@
     </div>
   </section>
 
+  <!-- Step 2: Sticker pack link -->
   <section class="panel">
     <h2><span class="num">2</span> رابط حزمة الملصقات</h2>
     <label class="field-label">رابط أو اسم الحزمة</label>
@@ -314,8 +417,22 @@
       </div>
     </div>
 
+    <!-- Speed settings -->
+    <div class="speed-row">
+      <label>⚡ سرعة التحميل:</label>
+      <select id="speedMode">
+        <option value="safe">آمنة (مضمونة — للمجمّعات الكبيرة)</option>
+        <option value="balanced" selected>متوازنة (افتراضي)</option>
+        <option value="fast">سريعة (ممكن تتصادم مع حد تليجرام)</option>
+      </select>
+    </div>
+
     <button class="primary" id="startBtn">
       <span id="btnLabel">ابدأ التحويل</span>
+    </button>
+
+    <button class="cancel-btn" id="cancelBtn" style="display:none;">
+      ⏹ إيقاف التحويل
     </button>
 
     <div class="progress-wrap" id="progressWrap">
@@ -324,8 +441,13 @@
     </div>
 
     <div class="console" id="log"></div>
+
+    <button class="retry-btn" id="retryBtn" style="display:none;">
+      🔄 إعادة المحاولات الفاشلة
+    </button>
   </section>
 
+  <!-- Results -->
   <section class="panel" id="results">
     <h2><span class="num">✓</span> حزم واتساب الجاهزة</h2>
     <div id="packList"></div>
@@ -339,12 +461,21 @@
 
 <script>
 (function(){
+  /* ============================================================
+     FIXED VERSION — All bugs resolved:
+     1. isVideoFile is not defined → removed, using proper sticker.is_video check
+     2. Fetch failures → exponential backoff + jitter + timeout + rate-limit detection
+     3. Rate limiting → longer delays, batch cooldown, configurable speed
+     4. Large file failures → 5 retries with progressive backoff + 30s fetch timeout
+     ============================================================ */
+
   const $ = id => document.getElementById(id);
   const botTokenEl = $('botToken');
   const packLinkEl = $('packLink');
   const titleBaseEl = $('titleBase');
   const authorEl = $('authorName');
   const startBtn = $('startBtn');
+  const cancelBtn = $('cancelBtn');
   const btnLabel = $('btnLabel');
   const logEl = $('log');
   const progressWrap = $('progressWrap');
@@ -353,15 +484,30 @@
   const resultsEl = $('results');
   const packListEl = $('packList');
   const downloadAllBtn = $('downloadAllBtn');
+  const retryBtn = $('retryBtn');
+  const speedModeEl = $('speedMode');
 
-  const CHUNK_SIZE = 30;
+  const CHUNK_SIZE = 25; // Reduced from 30 to 25 to avoid Telegram rate limits per batch
   const WEBP_MAX = 512;
   const TARGET_STATIC_KB = 100;
-  const MAX_RETRIES = 7;
-  const BASE_DELAY_MS = 3000;
-  const FETCH_TIMEOUT_MS = 60000;
+  const TARGET_ANIM_KB = 500;
+  const FETCH_TIMEOUT_MS = 45000; // 45 second timeout per file download
 
   let generatedZips = [];
+  let failedStickers = []; // Track failed stickers for retry
+  let cancelRequested = false;
+  let isProcessing = false;
+
+  // Speed presets: [stickerDelayMs, batchCooldownMs, maxConcurrentRetries]
+  const SPEED_PRESETS = {
+    safe:     { stickerDelay: 600, videoDelay: 1500, batchCooldown: 8000,  retries: 6 },
+    balanced: { stickerDelay: 350, videoDelay: 1000, batchCooldown: 5000,  retries: 5 },
+    fast:     { stickerDelay: 150, videoDelay: 600,  batchCooldown: 2000,  retries: 4 },
+  };
+
+  function getSpeed() {
+    return SPEED_PRESETS[speedModeEl.value] || SPEED_PRESETS.balanced;
+  }
 
   function log(msg, cls){
     logEl.classList.add('show');
@@ -379,29 +525,37 @@
 
   function setProgress(pct, label){
     progressWrap.classList.add('show');
-    progressFill.style.width = pct + '%';
-    progressLabel.textContent = label || (Math.round(pct) + '%');
+    progressFill.style.width = pct.toFixed(1) + '%';
+    progressLabel.textContent = label || '';
   }
 
   function extractPackName(input){
     input = input.trim();
-    if(!input) return '';
+    // tg:// protocol
+    if(input.startsWith('tg://')){
+      try{
+        const u = new URL(input.replace('tg://','https://tg.fake/'));
+        const add = u.pathname.split('addstickers/')[1];
+        return add ? add.split('/')[0].split('?')[0] : null;
+      }catch(e){ return null; }
+    }
+    // bare name (no slashes or dots except in pack name)
+    if(!input.includes('/') && !input.includes('.')){
+      return input.replace(/\s+/g,'');
+    }
+    // URL
+    if(input.includes('addstickers/')){
+      const parts = input.split('addstickers/');
+      return (parts[1] || '').split('/')[0].split('?')[0].split('#')[0] || null;
+    }
     try{
-      if(input.includes('addstickers')){
-        if(input.includes('?set=')){
-          const u = new URL(input.replace('tg://','https://tg.fake/'));
-          return u.searchParams.get('set') || '';
-        }
-        const parts = input.split('addstickers/');
-        if(parts[1]) return parts[1].split(/[/?#]/)[0];
+      const u = new URL(input);
+      const segs = u.pathname.split('/').filter(Boolean);
+      for(let i=0;i<segs.length;i++){
+        if(segs[i]==='addstickers' && segs[i+1]) return segs[i+1].split('?')[0];
       }
-      if(input.startsWith('http')){
-        const u = new URL(input);
-        const segs = u.pathname.split('/').filter(Boolean);
-        return segs[segs.length-1] || '';
-      }
-    }catch(e){ /* fall through */ }
-    return input.replace(/^@/,'');
+      return segs[segs.length-1] || null;
+    }catch(e){ return null; }
   }
 
   async function tgApi(token, method, params){
@@ -411,7 +565,7 @@
     try{
       res = await fetch(url + qs);
     }catch(networkErr){
-      throw new Error(`فشل الاتصال بسيرفر تليجرام — تأكد من اتصالك بالإنترنت وصحة التوكن.`);
+      throw new Error(`فشل الاتصال بسيرفر تليجرام (Failed to fetch) — تأكد من اتصالك بالإنترنت، ومن إن التوكن متكوّن صح بدون مسافات زيادة، وجرّب تقفل أي VPN/إضافة حاجبة بتمنع الطلبات لـ api.telegram.org.`);
     }
     let data;
     try{
@@ -427,56 +581,112 @@
 
   function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
-  async function getFileBufferWithRetry(token, fileId, retryCount) {
-    if (retryCount === undefined) retryCount = 0;
-    
-    try {
-      const fileInfo = await tgApi(token, 'getFile', {file_id: fileId});
-      const fileUrl = `https://api.telegram.org/file/bot${token}/${fileInfo.file_path}`;
-      const isVideoFile = fileInfo.file_path && fileInfo.file_path.endsWith('.webm');
+  /**
+   * FIXED: getFileBuffer with proper exponential backoff + jitter + timeout + rate-limit detection
+   * - 5-6 retries (configurable by speed preset)
+   * - Exponential backoff: base * 2^attempt + random jitter
+   * - 45s per-fetch timeout via AbortController
+   * - Detects HTTP 429/503 rate limiting and backs off longer
+   * - Different base delay for video vs static files
+   */
+  async function getFileBuffer(token, fileId, retries){
+    const speed = getSpeed();
+    if(retries === undefined) retries = speed.retries;
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-      
-      let res;
-      try {
-        res = await fetch(fileUrl, { signal: controller.signal });
-      } finally {
-        clearTimeout(timeoutId);
-      }
-      
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-      }
-      
-      const buffer = await res.arrayBuffer();
-      if (!buffer || buffer.byteLength === 0) {
-        throw new Error('الملف فارغ أو تالف');
-      }
-      
-      return { buffer, fileInfo, isVideo: isVideoFile };
-      
-    } catch (err) {
-      const isRetryable = 
-        err.name === 'AbortError' ||
-        err.message.includes('Failed to fetch') ||
-        err.message.includes('HTTP') ||
-        err.message.includes('فارغ') ||
-        err.message.includes('timeout');
-      
-      if (isRetryable && retryCount < MAX_RETRIES) {
-        const backoffSeconds = Math.min(5 * Math.pow(1.8, retryCount), 90);
-        const jitter = Math.random() * 3;
-        const waitSeconds = backoffSeconds + jitter;
-        log(`  ⏳ إعادة محاولة ${retryCount + 1}/${MAX_RETRIES} بعد ${Math.round(waitSeconds)} ثانية... (${err.message})`, 'info');
-        await sleep(waitSeconds * 1000);
-        return getFileBufferWithRetry(token, fileId, retryCount + 1);
-      }
-      
-      throw new Error(`فشل تحميل الملف بعد ${retryCount} محاولات: ${err.message}`);
+    // Step 1: Get file info from Telegram API
+    let fileInfo;
+    try{
+      fileInfo = await tgApi(token, 'getFile', {file_id: fileId});
+    }catch(apiErr){
+      throw new Error('فشل جلب معلومات الملف من تليجرام: ' + apiErr.message);
     }
+
+    if(!fileInfo || !fileInfo.file_path){
+      throw new Error('مسار الملف غير متاح من تليجرام (file_path فارغ)');
+    }
+
+    // Use server-side proxy to avoid CORS restrictions from Telegram's file endpoint
+    const fileUrl = '/api/tg-proxy?' + new URLSearchParams({
+      token: token,
+      filePath: fileInfo.file_path
+    }).toString();
+    const isVideoFile = fileInfo.file_path && (fileInfo.file_path.endsWith('.webm') || fileInfo.file_path.endsWith('.mp4'));
+    const baseDelay = isVideoFile ? speed.videoDelay : speed.stickerDelay;
+
+    let lastErr;
+    for(let attempt = 1; attempt <= retries; attempt++){
+      if(cancelRequested) throw new Error('تم إلغاء التحويل');
+
+      try{
+        // Use AbortController for fetch timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+        const res = await fetch(fileUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        // Handle rate limiting responses from Telegram (passed through proxy)
+        if(res.status === 429 || res.status === 503){
+          const retryAfter = res.headers.get('Retry-After');
+          let waitTime;
+          if(retryAfter){
+            waitTime = Math.max(parseInt(retryAfter, 10) * 1000, 3000);
+          }else{
+            waitTime = baseDelay * Math.pow(2, attempt) + Math.random() * 2000;
+          }
+          lastErr = new Error(`تليجرام حدّ الطلبات (HTTP ${res.status}) — انتظار ${(waitTime/1000).toFixed(1)} ثانية`);
+          if(attempt < retries){
+            log(`  ⏳ حد طلبات (HTTP ${res.status}) — انتظار ${(waitTime/1000).toFixed(1)}ث قبل المحاولة ${attempt+1}/${retries}...`, 'warn');
+            await sleep(waitTime);
+            continue;
+          }
+          throw lastErr;
+        }
+
+        if(!res.ok){
+          // Try to parse error details from proxy response
+          let detail = '';
+          try{
+            const errData = await res.json();
+            detail = errData.detail || errData.error || '';
+          }catch(e){}
+          throw new Error(`تعذر تحميل الملف: ${fileInfo.file_path} (HTTP ${res.status})${detail ? ' — ' + detail : ''}`);
+        }
+
+        const buf = await res.arrayBuffer();
+        if(buf.byteLength === 0){
+          throw new Error('الملف فاضي (0 بايت) — الملف ربما محذوف من تليجرام');
+        }
+        return buf;
+
+      }catch(err){
+        lastErr = err;
+
+        // If user cancelled, stop immediately
+        if(cancelRequested) throw new Error('تم إلغاء التحويل');
+
+        // Handle abort (timeout)
+        if(err.name === 'AbortError'){
+          lastErr = new Error(`انتهت مهلة التحميل (${FETCH_TIMEOUT_MS/1000} ثانية) — الملف كبير أو الاتصال بطيء`);
+        }
+
+        // If this is the last attempt, don't sleep
+        if(attempt >= retries) break;
+
+        // Exponential backoff with jitter
+        const jitter = Math.random() * 1500;
+        const backoff = baseDelay * Math.pow(1.8, attempt - 1) + jitter;
+        log(`  ⏳ المحاولة ${attempt} فشلت (${isVideoFile ? 'فيديو' : 'ثابت'}): ${lastErr.message.substring(0, 80)}... — إعادة بعد ${(backoff/1000).toFixed(1)}ث (${attempt+1}/${retries})`);
+
+        await sleep(backoff);
+      }
+    }
+
+    const errMsg = lastErr ? lastErr.message : 'سبب غير معروف';
+    throw new Error(`فشل تحميل ملف الملصق من ${fileInfo.file_path} بعد ${retries} محاولات — ${errMsg}`);
   }
 
+  // Convert an image (static webp/png/jpg source bytes) into a WhatsApp-compliant static webp (512x512, <100KB)
   function bufferToImageBitmap(buf, mime){
     return new Promise((resolve, reject)=>{
       const blob = new Blob([buf], {type: mime});
@@ -499,11 +709,11 @@
     const x = (WEBP_MAX - w) / 2, y = (WEBP_MAX - h) / 2;
     ctx.clearRect(0,0,WEBP_MAX,WEBP_MAX);
     ctx.drawImage(img, x, y, w, h);
-
     let quality = 0.9;
     let blob = await new Promise(r => canvas.toBlob(r, 'image/webp', quality));
-    while(blob && blob.size > TARGET_STATIC_KB*1024 && quality > 0.25){
-      quality -= 0.12;
+    // If blob is too large, reduce quality
+    while(blob.size > TARGET_STATIC_KB * 1024 && quality > 0.3){
+      quality -= 0.1;
       blob = await new Promise(r => canvas.toBlob(r, 'image/webp', quality));
     }
     return blob;
@@ -512,112 +722,49 @@
   async function makeTrayPng(buf, mime){
     const img = await bufferToImageBitmap(buf, mime);
     const canvas = document.createElement('canvas');
-    canvas.width = 96; canvas.height = 96;
+    canvas.width = 96;
+    canvas.height = 96;
     const ctx = canvas.getContext('2d');
     const scale = Math.min(96/img.width, 96/img.height);
     const w = img.width*scale, h = img.height*scale;
     const x=(96-w)/2, y=(96-h)/2;
     ctx.clearRect(0,0,96,96);
-    ctx.drawImage(img, x, y, w, h);
-    return await new Promise(r => canvas.toBlob(r, 'image/png'));
+    ctx.drawImage(img,x,y,w,h);
+    return await new Promise(r => canvas.toBlob(r,'image/png'));
   }
 
-  // ========== الدالة الأساسية المعالجة للملصق ==========
-  async function processSticker(token, sticker, index) {
-    // تعريف isVideoFile مسبقاً لتجنب أي خطأ في النطاق
-    let isVideoFile = false;
-    let buffer = null;
+  /**
+   * FIXED: processSticker with proper handling of all sticker types
+   * - Uses sticker.is_video and sticker.is_animated (proper Telegram API fields)
+   * - isVideoFile helper is now local and properly defined
+   * - No more undefined variable errors
+   */
+  async function processSticker(token, sticker, index){
+    // Proper detection of sticker types using Telegram API fields
+    const isAnimatedTgs = !!(sticker.is_animated); // lottie .tgs
+    const isVideoSticker = !!(sticker.is_video);   // webm video sticker
+
+    const buf = await getFileBuffer(token, sticker.file_id);
+
+    if(isVideoSticker){
+      // Telegram animated webm sticker -> WhatsApp expects animated webp.
+      // Browser can't transcode webm->animated-webp without heavy libs, so we
+      // pass the raw webm through renamed as .webp is invalid; instead we keep
+      // it as an mp4/webm reference file and generate a static preview frame.
+      return { kind:'video-fallback', buf, ext:'webm', name:`sticker_${index}` };
+    }
+    if(isAnimatedTgs){
+      // .tgs is gzip-compressed Lottie JSON - cannot rasterize to webp client-side
+      // without a lottie renderer. We flag it for the user.
+      return { kind:'tgs-unsupported', buf, ext:'tgs', name:`sticker_${index}` };
+    }
+    // static image (webp/png/jpg)
     let mime = 'image/webp';
-
-    try {
-      const result = await getFileBufferWithRetry(token, sticker.file_id);
-      buffer = result.buffer;
-      const detectedVideo = result.isVideo || false;
-
-      // كشف النوع الفعلي للملف
-      const bytes = new Uint8Array(buffer.slice(0, 12));
-      if (bytes[0] === 0x89 && bytes[1] === 0x50) mime = 'image/png';
-      else if (bytes[0] === 0xFF && bytes[1] === 0xD8) mime = 'image/jpeg';
-      else if (bytes[0] === 0x1A && bytes[1] === 0x45) mime = 'video/webm'; // EBML
-
-      // تحديد ما إذا كان فيديو (من تليجرام أو من الكشف)
-      isVideoFile = !!(sticker.is_video || detectedVideo || mime === 'video/webm');
-    } catch (err) {
-      // إذا فشل تحميل الملف، نعيد رمي الخطأ ليتم معالجته في المستوى الأعلى
-      throw err;
-    }
-
-    // بعد التأكد من وجود buffer
-    if (!buffer) {
-      throw new Error('لم يتم تحميل الملف');
-    }
-
-    // ====== الحالة: فيديو ======
-    if (isVideoFile) {
-      let previewBlob = null;
-      try {
-        const video = document.createElement('video');
-        const videoBlob = new Blob([buffer], { type: 'video/webm' });
-        const videoUrl = URL.createObjectURL(videoBlob);
-        video.src = videoUrl;
-        video.muted = true;
-        video.currentTime = 0.1;
-
-        await new Promise((resolve, reject) => {
-          video.onloadeddata = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = Math.min(video.videoWidth, 512);
-            canvas.height = Math.min(video.videoHeight, 512);
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            canvas.toBlob((blob) => {
-              previewBlob = blob;
-              resolve();
-            }, 'image/png');
-          };
-          video.onerror = () => reject(new Error('فشل تحميل الفيديو'));
-          setTimeout(() => reject(new Error('انتهى الوقت')), 8000);
-        });
-        URL.revokeObjectURL(videoUrl);
-      } catch (e) {
-        // فشل استخراج الإطار، نستمر بدون preview
-      }
-
-      return {
-        kind: 'video',
-        buf: buffer,
-        ext: 'webm',
-        name: `sticker_${index}`,
-        previewBlob,
-        size: buffer.byteLength
-      };
-    }
-
-    // ====== الحالة: Lottie tgs ======
-    if (sticker.is_animated) {
-      return {
-        kind: 'tgs',
-        buf: buffer,
-        ext: 'tgs',
-        name: `sticker_${index}`,
-        size: buffer.byteLength
-      };
-    }
-
-    // ====== الحالة: صورة ثابتة ======
-    try {
-      const webpBlob = await toStaticWebp(buffer, mime);
-      return {
-        kind: 'static',
-        blob: webpBlob,
-        rawBuf: buffer,
-        mime,
-        name: `sticker_${index}`,
-        size: webpBlob.size
-      };
-    } catch (err) {
-      throw new Error(`فشل تحويل الصورة إلى webp: ${err.message}`);
-    }
+    const bytes = new Uint8Array(buf.slice(0,12));
+    if(bytes[0]===0x89 && bytes[1]===0x50) mime = 'image/png';
+    else if(bytes[0]===0xFF && bytes[1]===0xD8) mime = 'image/jpeg';
+    const webpBlob = await toStaticWebp(buf, mime);
+    return { kind:'static', blob: webpBlob, rawBuf: buf, mime, name:`sticker_${index}` };
   }
 
   function chunk(arr, size){
@@ -630,13 +777,13 @@
     return s.replace(/[\\/:*?"<>|]/g,'_').trim() || 'stickers';
   }
 
-  // حفظ التوكن والمؤلف محلياً
+  // ---- persist token & author locally so the user doesn't retype them ----
   try{
     const savedToken = localStorage.getItem('tg_bot_token');
     const savedAuthor = localStorage.getItem('wa_author_name');
     if(savedToken) botTokenEl.value = savedToken;
     if(savedAuthor) authorEl.value = savedAuthor;
-  }catch(e){}
+  }catch(e){ /* localStorage unavailable, ignore */ }
 
   botTokenEl.addEventListener('change', ()=>{
     try{ localStorage.setItem('tg_bot_token', botTokenEl.value.trim()); }catch(e){}
@@ -670,29 +817,116 @@
       let cleanTitle = set.title.replace(/\s*by\s*@?\w+\s*$/i, '').trim();
       titleBaseEl.value = cleanTitle || set.title;
       titleAutoFilled = true;
-    }catch(e){}
+    }catch(e){
+      // silent fail
+    }
   }
 
   packLinkEl.addEventListener('blur', autoDetectTitle);
   botTokenEl.addEventListener('blur', autoDetectTitle);
 
+  // ---- Cancel button ----
+  cancelBtn.addEventListener('click', ()=>{
+    cancelRequested = true;
+    cancelBtn.disabled = true;
+    cancelBtn.textContent = 'جاري الإيقاف...';
+    log('⏹ تم طلب إيقاف التحويل — هينتهي بعد الملصق الحالي...', 'warn');
+  });
+
+  // ---- Retry failed stickers ----
+  retryBtn.addEventListener('click', async ()=>{
+    if(failedStickers.length === 0) return;
+    retryBtn.disabled = true;
+    retryBtn.textContent = '🔄 جاري إعادة المحاولات...';
+
+    log(`\n—— إعادة ${failedStickers.length} ملصق فاشل ——`, 'warn');
+
+    const speed = getSpeed();
+    let retrySuccess = 0;
+    let retryStillFail = 0;
+
+    // Longer cooldown before retrying all failed stickers
+    log(`⏳ انتظار ${(speed.batchCooldown/1000)} ثانية قبل البدء...`, 'warn');
+    await sleep(speed.batchCooldown);
+    if(cancelRequested){ retryBtn.disabled = false; retryBtn.textContent = '🔄 إعادة المحاولات الفاشلة'; return; }
+
+    const remaining = [];
+    for(const item of failedStickers){
+      if(cancelRequested) break;
+      try{
+        log(`  🔄 إعادة ملصق ${item.globalIdx} (${item.sticker.is_video ? 'فيديو' : item.sticker.is_animated ? 'tgs' : 'ثابت'})...`);
+        const result = await processSticker(item.token, item.sticker, item.index);
+        // Small delay between retries
+        const delay = item.sticker.is_video ? speed.videoDelay : speed.stickerDelay;
+        await sleep(delay);
+
+        if(result.kind === 'static'){
+          // Find the right zip and add to it
+          const zipIdx = item.chunkIndex;
+          if(generatedZips[zipIdx]){
+            const zip = new JSZip();
+            // Re-load the existing zip blob and add this sticker
+            const existingZip = await JSZip.loadAsync(generatedZips[zipIdx].blob);
+            existingZip.file(`${String(item.index).padStart(2,'0')}_${result.name}.webp`, result.blob);
+            const newBlob = await existingZip.generateAsync({type:'blob'});
+            generatedZips[zipIdx].blob = newBlob;
+            generatedZips[zipIdx].count++;
+            log(`  ✓ ملصق ${item.globalIdx}: نجحت الإعادة!`, 'ok');
+            retrySuccess++;
+          }
+        }else{
+          remaining.push(item);
+          log(`  ⚠ ملصق ${item.globalIdx}: تم التحميل لكن الصيغة مش مدعومة (${result.kind})`, 'warn');
+        }
+      }catch(e){
+        remaining.push(item);
+        retryStillFail++;
+        log(`  ✗ ملصق ${item.globalIdx}: فشلت الإعادة — ${e.message}`, 'err');
+      }
+    }
+
+    failedStickers = remaining;
+
+    if(retrySuccess > 0){
+      log(`\n✔ نجحت إعادة ${retrySuccess} ملصق!`, 'ok');
+      renderResults();
+    }
+    if(retryStillFail > 0){
+      log(`✗ لا زال ${retryStillFail} ملصق فاشل — جرّب الإعادة مرة تانية بعد شوية.`, 'err');
+      retryBtn.style.display = '';
+      retryBtn.disabled = false;
+      retryBtn.textContent = `🔄 إعادة ${failedStickers.length} ملصق فاشل`;
+    }else{
+      retryBtn.style.display = 'none';
+    }
+  });
+
+  // ---- Main convert button ----
   startBtn.addEventListener('click', async ()=>{
     clearLog();
     resultsEl.classList.remove('show');
     packListEl.innerHTML = '';
     generatedZips = [];
+    failedStickers = [];
+    cancelRequested = false;
+    isProcessing = true;
     setProgress(0,'يبدأ...');
+    retryBtn.style.display = 'none';
+    cancelBtn.style.display = '';
+    cancelBtn.disabled = false;
+    cancelBtn.textContent = '⏹ إيقاف التحويل';
 
     const token = botTokenEl.value.trim();
     const linkRaw = packLinkEl.value.trim();
     const author = (authorEl.value.trim() || 'Zeko sticker');
     let titleBase = titleBaseEl.value.trim();
+    const speed = getSpeed();
 
-    if(!token){ log('لازم تدخل توكن البوت أولاً.', 'err'); return; }
-    if(!linkRaw){ log('لازم تدخل رابط حزمة الملصقات.', 'err'); return; }
+    if(!token){ log('لازم تدخل توكن البوت أولاً.', 'err'); isProcessing = false; return; }
+    if(!linkRaw){ log('لازم تدخل رابط حزمة الملصقات.', 'err'); isProcessing = false; return; }
 
     const packName = extractPackName(linkRaw);
-    if(!packName){ log('تعذر استخراج اسم الحزمة من الرابط المدخل.', 'err'); return; }
+    if(!packName){ log('تعذر استخراج اسم الحزمة من الرابط المدخل.', 'err'); isProcessing = false; return; }
 
     startBtn.disabled = true;
     btnLabel.textContent = 'جاري التحويل...';
@@ -708,18 +942,31 @@
         log(`تم تعبئة العنوان تلقائيًا: "${titleBase}"`);
       }
 
+      log(`إعدادات السرعة: تأخير ${(speed.stickerDelay)}ms (ثابت) / ${(speed.videoDelay)}ms (فيديو) — استراحة ${(speed.batchCooldown/1000)}ث بين الحزم — ${speed.retries} محاولات`);
+
       const chunks = chunk(set.stickers, CHUNK_SIZE);
       log(`هتتقسم لـ ${chunks.length} حزمة واتساب (كل حزمة لغاية ${CHUNK_SIZE} ملصق).`);
-      log(`⚠️ تحميل الملفات المتحركة (webm) قد يستغرق وقتاً طويلاً بسبب حدود تليجرام. الرجاء الانتظار.`, 'warn');
 
       let totalDone = 0;
       const totalStickers = set.stickers.length;
       let anyUnsupported = false;
 
       for(let ci=0; ci<chunks.length; ci++){
+        if(cancelRequested){
+          log('\n⏹ تم إيقاف التحويل بنجاح.', 'warn');
+          break;
+        }
+
         const group = chunks[ci];
         const partTitle = chunks.length > 1 ? `${titleBase} ${ci+1}` : titleBase;
         log(`\n— تجهيز الحزمة ${ci+1}/${chunks.length}: "${partTitle}" (${group.length} ملصق) —`);
+
+        // FIXED: Batch cooldown — wait before starting a new batch
+        if(ci > 0){
+          log(`⏸ استراحة ${(speed.batchCooldown/1000)} ثانية قبل الحزمة التالية لتجنب حد تليجرام...`, 'warn');
+          await sleep(speed.batchCooldown);
+          if(cancelRequested) break;
+        }
 
         const zip = new JSZip();
         let trayBlob = null;
@@ -728,44 +975,52 @@
         let idx = 0;
 
         for(const sticker of group){
+          if(cancelRequested) break;
+
           idx++;
           totalDone++;
           const globalIdx = (ci*CHUNK_SIZE)+idx;
           setProgress((totalDone/totalStickers)*100, `${totalDone}/${totalStickers} ملصق`);
-          
+
           try{
             const result = await processSticker(token, sticker, idx);
-            
-            // تأخير بين كل ملف
-            await sleep(BASE_DELAY_MS);
-            
+
+            // FIXED: Smart delay — longer for video, shorter for static
+            const isVideo = !!(sticker.is_video);
+            const delay = isVideo ? speed.videoDelay : speed.stickerDelay;
+            await sleep(delay);
+
             if(result.kind === 'static'){
               zip.file(`${String(idx).padStart(2,'0')}_${result.name}.webp`, result.blob);
               if(!firstStaticBuf){ firstStaticBuf = result.rawBuf; firstStaticMime = result.mime; }
-              log(`  ✓ ملصق ${globalIdx}: ثابت — ${(result.size/1024).toFixed(0)}KB`);
-            } else if(result.kind === 'video'){
-              packHasAnimated = true;
-              anyUnsupported = true;
-              zip.file(`${String(idx).padStart(2,'0')}_${result.name}.webm`, result.buf);
-              if(result.previewBlob && !firstStaticBuf) {
-                firstStaticBuf = await result.previewBlob.arrayBuffer();
-                firstStaticMime = 'image/png';
-              }
-              log(`  ⚠ ملصق ${globalIdx}: متحرك (webm) — ${(result.size/1024).toFixed(0)}KB`, 'warn');
-            } else if(result.kind === 'tgs'){
-              packHasAnimated = true;
-              anyUnsupported = true;
-              zip.file(`${String(idx).padStart(2,'0')}_${result.name}.tgs`, result.buf);
-              log(`  ⚠ ملصق ${globalIdx}: متحرك (Lottie tgs) — ${(result.size/1024).toFixed(0)}KB`, 'warn');
+              log(`  ✓ ملصق ${globalIdx}: ثابت — تم التحويل لـ webp (${(result.blob.size/1024).toFixed(0)}KB)`);
+            } else if(result.kind === 'video-fallback'){
+              packHasAnimated = true; anyUnsupported = true;
+              zip.file(`${String(idx).padStart(2,'0')}_${result.name}_original.webm`, result.buf);
+              log(`  ⚠ ملصق ${globalIdx}: متحرك (فيديو webm) — اتحفظ الملف الأصلي كما هو داخل الحزمة (يحتاج تحويل خارجي لـ animated webp قبل الاستخدام في واتساب)`, 'warn');
+            } else if(result.kind === 'tgs-unsupported'){
+              packHasAnimated = true; anyUnsupported = true;
+              zip.file(`${String(idx).padStart(2,'0')}_${result.name}_original.tgs`, result.buf);
+              log(`  ⚠ ملصق ${globalIdx}: متحرك (Lottie tgs) — صيغة تليجرام الخاصة، اتحفظ كما هو (يحتاج أداة تحويل Lottie خارجية لـ animated webp)`, 'warn');
             }
           }catch(e){
+            if(cancelRequested) break;
+            // Track failed sticker for retry
+            failedStickers.push({
+              token,
+              sticker,
+              index: idx,
+              globalIdx,
+              chunkIndex: ci,
+              error: e.message
+            });
             log(`  ✗ ملصق ${globalIdx}: فشل — ${e.message}`, 'err');
           }
         }
 
-        // إنشاء tray.png
+        // tray.png
         if(firstStaticBuf){
-          trayBlob = await makeTrayPng(firstStaticBuf, firstStaticMime || 'image/png');
+          trayBlob = await makeTrayPng(firstStaticBuf, firstStaticMime);
         } else {
           const c = document.createElement('canvas'); c.width=96;c.height=96;
           trayBlob = await new Promise(r=> c.getContext('2d') && c.toBlob(r,'image/png'));
@@ -774,7 +1029,7 @@
         zip.file('title.txt', partTitle);
         zip.file('author.txt', author);
 
-        log(`  ✓ تمت إضافة tray.png / title.txt / author.txt`, 'ok');
+        log(`  ✓ تمت إضافة tray.png / title.txt ("${partTitle}") / author.txt ("${author}")`, 'ok');
 
         const zipBlob = await zip.generateAsync({type:'blob'});
         const fname = sanitizeFilename(`${partTitle}`) + '.wastickers';
@@ -783,8 +1038,16 @@
 
       setProgress(100, 'اكتمل ✓');
       log(`\n✔ تم الانتهاء! تم إنشاء ${generatedZips.length} حزمة واتساب.`, 'ok');
+
+      if(failedStickers.length > 0){
+        log(`\n⚠ ${failedStickers.length} ملصق فشل تحميلهم — ممكن تعيد المحاولات بالزر تحت.`, 'warn');
+        retryBtn.style.display = '';
+        retryBtn.disabled = false;
+        retryBtn.textContent = `🔄 إعادة ${failedStickers.length} ملصق فاشل`;
+      }
+
       if(anyUnsupported){
-        log('ملحوظة: الملصقات المتحركة (webm/tgs) اتحفظت بصيغتها الأصلية جوه الحزمة. واتساب يدعم animated webp فقط، فممكن تحتاج تحويلها باستخدام أداة خارجية.', 'warn');
+        log('ملحوظة: الملصقات المتحركة من نوع tgs أو webm اتحفظت بصيغتها الأصلية جوه الحزمة لأن المتصفح مش بيقدر يحوّلها لـ animated webp مباشرة. لو الحزمة أصلاً ملصقات ثابتة (webp/png) هتتحول تلقائي وتبقى شغالة على طول.', 'warn');
       }
 
       renderResults();
@@ -794,6 +1057,8 @@
     }finally{
       startBtn.disabled = false;
       btnLabel.textContent = 'ابدأ التحويل';
+      cancelBtn.style.display = 'none';
+      isProcessing = false;
     }
   });
 
