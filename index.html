@@ -222,6 +222,7 @@
   .console .line.err{color:var(--err);}
   .console .line.ok{color:var(--leaf-bright);}
   .console .line.warn{color:var(--amber);}
+  .console .line.info{color:var(--ink-dim);}
 
   .progress-wrap{
     display:none;
@@ -303,7 +304,6 @@
     text-align:center;
   }
 
-  /* leaf watermark seam decoration */
   .seed-icon{
     width:34px;height:34px;
     flex-shrink:0;
@@ -393,12 +393,12 @@
   const downloadAllBtn = $('downloadAllBtn');
 
   const CHUNK_SIZE = 30;
-  const WEBP_MAX = 512; // whatsapp static sticker max px
-  const ANIM_MAX_DURATION_MS = 10000; // whatsapp animated sticker max duration guideline
+  const WEBP_MAX = 512;
   const TARGET_STATIC_KB = 100;
-  const TARGET_ANIM_KB = 500;
+  const MAX_RETRIES = 5;
+  const BASE_DELAY_MS = 1500; // Increased delay between requests
 
-  let generatedZips = []; // {name, blob, count, animated, trayDataUrl}
+  let generatedZips = [];
 
   function log(msg, cls){
     logEl.classList.add('show');
@@ -423,7 +423,6 @@
   function extractPackName(input){
     input = input.trim();
     if(!input) return '';
-    // handle full urls: https://t.me/addstickers/Name  or tg://addstickers?set=Name
     try{
       if(input.includes('addstickers')){
         if(input.includes('?set=')){
@@ -439,7 +438,6 @@
         return segs[segs.length-1] || '';
       }
     }catch(e){ /* fall through */ }
-    // plain name
     return input.replace(/^@/,'');
   }
 
@@ -450,7 +448,7 @@
     try{
       res = await fetch(url + qs);
     }catch(networkErr){
-      throw new Error(`فشل الاتصال بسيرفر تليجرام (Failed to fetch) — تأكد من اتصالك بالإنترنت، ومن إن التوكن متكوّن صح بدون مسافات زيادة، وجرّب تقفل أي VPN/إضافة حاجبة بتمنع الطلبات لـ api.telegram.org.`);
+      throw new Error(`فشل الاتصال بسيرفر تليجرام — تأكد من اتصالك بالإنترنت وصحة التوكن.`);
     }
     let data;
     try{
@@ -466,29 +464,52 @@
 
   function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
-  async function getFileBuffer(token, fileId, retries){
-    if(retries === undefined) retries = 3;
-    const fileInfo = await tgApi(token, 'getFile', {file_id: fileId});
-    const fileUrl = `https://api.telegram.org/file/bot${token}/${fileInfo.file_path}`;
-
-    let lastErr;
-    for(let attempt = 1; attempt <= retries; attempt++){
-      try{
-        const res = await fetch(fileUrl);
-        if(!res.ok) throw new Error('تعذر تحميل الملف: ' + fileInfo.file_path + ` (HTTP ${res.status})`);
-        return await res.arrayBuffer();
-      }catch(networkErr){
-        lastErr = networkErr;
-        if(attempt < retries){
-          await sleep(attempt * 800); // backoff: 800ms, 1600ms...
-          continue;
-        }
+  async function getFileBufferWithRetry(token, fileId, retryCount) {
+    if (retryCount === undefined) retryCount = 0;
+    
+    try {
+      const fileInfo = await tgApi(token, 'getFile', {file_id: fileId});
+      const fileUrl = `https://api.telegram.org/file/bot${token}/${fileInfo.file_path}`;
+      
+      // Check if file path indicates video/webm
+      const isVideoFile = fileInfo.file_path && fileInfo.file_path.endsWith('.webm');
+      
+      const res = await fetch(fileUrl);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       }
+      
+      const buffer = await res.arrayBuffer();
+      
+      // Verify we actually got data
+      if (!buffer || buffer.byteLength === 0) {
+        throw new Error('الملف فارغ أو تالف');
+      }
+      
+      return { buffer, fileInfo, isVideo: isVideoFile };
+      
+    } catch (err) {
+      const maxRetries = isVideoFile ? MAX_RETRIES + 2 : MAX_RETRIES;
+      const isRetryable = err.message.includes('Failed to fetch') || 
+                          err.message.includes('HTTP') ||
+                          err.message.includes('فارغ');
+      
+      if (isRetryable && retryCount < maxRetries) {
+        // Exponential backoff with jitter: 2s, 4s, 8s, 12s, 16s...
+        const backoffMs = Math.min(2000 * Math.pow(1.5, retryCount), 20000);
+        const jitter = Math.random() * 500;
+        const waitMs = backoffMs + jitter;
+        
+        log(`  ⏳ إعادة محاولة ${retryCount + 1}/${maxRetries} بعد ${Math.round(waitMs/1000)} ثانية...`, 'info');
+        await sleep(waitMs);
+        return getFileBufferWithRetry(token, fileId, retryCount + 1);
+      }
+      
+      throw err;
     }
-    throw new Error(`فشل تحميل ملف الملصق من ${fileInfo.file_path} بعد ${retries} محاولات — الملف على الأغلب فيديو متحرك كبير الحجم وتليجرام بيحدّ من الطلبات المتتالية. جرّب تاني أو قلل عدد الملصقات المتحركة في الحزمة.`);
   }
 
-  // Convert an image (static webp/png/jpg source bytes) into a WhatsApp-compliant static webp (512x512, <100KB)
+  // Convert an image to static webp
   function bufferToImageBitmap(buf, mime){
     return new Promise((resolve, reject)=>{
       const blob = new Blob([buf], {type: mime});
@@ -506,7 +527,6 @@
     canvas.width = WEBP_MAX;
     canvas.height = WEBP_MAX;
     const ctx = canvas.getContext('2d');
-    // fit contain within 512x512, keep transparency
     const scale = Math.min(WEBP_MAX / img.width, WEBP_MAX / img.height);
     const w = img.width * scale, h = img.height * scale;
     const x = (WEBP_MAX - w) / 2, y = (WEBP_MAX - h) / 2;
@@ -535,36 +555,87 @@
     return await new Promise(r => canvas.toBlob(r, 'image/png'));
   }
 
-  // For animated stickers (tgs = lottie-gzip, or webm video stickers) we cannot fully
-  // re-encode to animated webp in-browser without heavy codecs. Strategy:
-  // - If source is webm (video sticker): keep as .webp container isn't feasible client-side reliably,
-  //   so we extract first frame as a static fallback AND include the original webm alongside,
-  //   clearly logged, so the user (or WhatsApp Sticker Maker companion apps) can finish animated conversion if needed.
-  // - If source is .webp animated (newer telegram animated webp stickers): pass through directly since WhatsApp also uses animated webp.
   async function processSticker(token, sticker, index){
-    const isAnimatedTgs = sticker.is_animated; // lottie .tgs
-    const isVideo = sticker.is_video; // webm video sticker
-    const buf = await getFileBuffer(token, sticker.file_id);
-
-    if(isVideo){
-      // Telegram animated webm sticker -> WhatsApp expects animated webp.
-      // Browser can't transcode webm->animated-webp without heavy libs, so we
-      // pass the raw webm through renamed as .webp is invalid; instead we keep
-      // it as an mp4/webm reference file and generate a static preview frame.
-      return { kind:'video-fallback', buf, ext:'webm', name:`sticker_${index}` };
-    }
-    if(isAnimatedTgs){
-      // .tgs is gzip-compressed Lottie JSON - cannot rasterize to webp client-side
-      // without a lottie renderer. We flag it for the user.
-      return { kind:'tgs-unsupported', buf, ext:'tgs', name:`sticker_${index}` };
-    }
-    // static image (webp/png/jpg)
+    const isAnimatedTgs = sticker.is_animated;
+    const isVideo = sticker.is_video;
+    
+    const result = await getFileBufferWithRetry(token, sticker.file_id);
+    const { buffer, isVideo: detectedVideo } = result;
+    
+    // Detect mime type
+    const bytes = new Uint8Array(buffer.slice(0,12));
     let mime = 'image/webp';
-    const bytes = new Uint8Array(buf.slice(0,12));
     if(bytes[0]===0x89 && bytes[1]===0x50) mime = 'image/png';
     else if(bytes[0]===0xFF && bytes[1]===0xD8) mime = 'image/jpeg';
-    const webpBlob = await toStaticWebp(buf, mime);
-    return { kind:'static', blob: webpBlob, rawBuf: buf, mime, name:`sticker_${index}` };
+    else if(bytes[0]===0x1A && bytes[1]===0x45) mime = 'video/webm'; // EBML/webm
+    
+    // Check if it's actually a video by mime or flag
+    const isVideoFile = isVideo || detectedVideo || mime === 'video/webm';
+
+    if(isVideoFile){
+      // Keep webm as-is, also try to extract first frame for preview
+      let previewBlob = null;
+      try {
+        // Try to get first frame using video element
+        const video = document.createElement('video');
+        const videoBlob = new Blob([buffer], {type: 'video/webm'});
+        const videoUrl = URL.createObjectURL(videoBlob);
+        video.src = videoUrl;
+        video.muted = true;
+        video.currentTime = 0.1; // Try to seek to first frame
+        
+        await new Promise((resolve, reject) => {
+          video.onloadeddata = () => {
+            // Create canvas from first frame
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.min(video.videoWidth, 512);
+            canvas.height = Math.min(video.videoHeight, 512);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob((blob) => {
+              previewBlob = blob;
+              resolve();
+            }, 'image/png');
+          };
+          video.onerror = () => reject(new Error('فشل تحميل الفيديو'));
+          setTimeout(() => reject(new Error('انتهى الوقت')), 8000);
+        });
+        
+        URL.revokeObjectURL(videoUrl);
+      } catch(e) {
+        // Silent fail for preview - we'll use fallback
+      }
+      
+      return { 
+        kind:'video', 
+        buf: buffer, 
+        ext:'webm', 
+        name:`sticker_${index}`,
+        previewBlob,
+        size: buffer.byteLength
+      };
+    }
+    
+    if(isAnimatedTgs){
+      return { 
+        kind:'tgs', 
+        buf: buffer, 
+        ext:'tgs', 
+        name:`sticker_${index}`,
+        size: buffer.byteLength
+      };
+    }
+    
+    // Static image
+    const webpBlob = await toStaticWebp(buffer, mime);
+    return { 
+      kind:'static', 
+      blob: webpBlob, 
+      rawBuf: buffer, 
+      mime, 
+      name:`sticker_${index}`,
+      size: webpBlob.size
+    };
   }
 
   function chunk(arr, size){
@@ -577,13 +648,13 @@
     return s.replace(/[\\/:*?"<>|]/g,'_').trim() || 'stickers';
   }
 
-  // ---- persist token & author locally so the user doesn't retype them ----
+  // ---- Persist token & author ----
   try{
     const savedToken = localStorage.getItem('tg_bot_token');
     const savedAuthor = localStorage.getItem('wa_author_name');
     if(savedToken) botTokenEl.value = savedToken;
     if(savedAuthor) authorEl.value = savedAuthor;
-  }catch(e){ /* localStorage unavailable, ignore */ }
+  }catch(e){}
 
   botTokenEl.addEventListener('change', ()=>{
     try{ localStorage.setItem('tg_bot_token', botTokenEl.value.trim()); }catch(e){}
@@ -592,11 +663,10 @@
     try{ localStorage.setItem('wa_author_name', authorEl.value.trim()); }catch(e){}
   });
 
-  let titleAutoFilled = false; // track if current value was set by us (not the user)
+  let titleAutoFilled = false;
   let lastAutoDetectKey = '';
 
   titleBaseEl.addEventListener('input', ()=>{
-    // once the user types anything themselves, stop auto-overwriting it
     titleAutoFilled = false;
   });
 
@@ -608,20 +678,18 @@
     if(!packName) return;
 
     const key = token + '|' + packName;
-    if(key === lastAutoDetectKey) return; // avoid duplicate calls for same input
+    if(key === lastAutoDetectKey) return;
     lastAutoDetectKey = key;
 
-    // only auto-fill if the field is empty or still holds our previous auto value
     if(titleBaseEl.value.trim() !== '' && !titleAutoFilled) return;
 
     try{
       const set = await tgApi(token, 'getStickerSet', {name: packName});
-      // telegram titles often end with "by @BotName" — strip that off for a cleaner title
       let cleanTitle = set.title.replace(/\s*by\s*@?\w+\s*$/i, '').trim();
       titleBaseEl.value = cleanTitle || set.title;
       titleAutoFilled = true;
     }catch(e){
-      // silent fail here; the user will see the real error when they hit convert
+      // silent
     }
   }
 
@@ -674,7 +742,7 @@
 
         const zip = new JSZip();
         let trayBlob = null;
-        let firstStaticBuf = null, firstStaticMime = null; // reset per-chunk, so tray.png reflects THIS chunk's own first sticker
+        let firstStaticBuf = null, firstStaticMime = null;
         let packHasAnimated = false;
         let idx = 0;
 
@@ -683,21 +751,32 @@
           totalDone++;
           const globalIdx = (ci*CHUNK_SIZE)+idx;
           setProgress((totalDone/totalStickers)*100, `${totalDone}/${totalStickers} ملصق`);
+          
           try{
             const result = await processSticker(token, sticker, idx);
-            await sleep(120); // small pacing delay to avoid Telegram rate-limiting on consecutive file requests
+            
+            // Add a delay between sticker downloads to avoid rate limiting
+            await sleep(BASE_DELAY_MS);
+            
             if(result.kind === 'static'){
               zip.file(`${String(idx).padStart(2,'0')}_${result.name}.webp`, result.blob);
               if(!firstStaticBuf){ firstStaticBuf = result.rawBuf; firstStaticMime = result.mime; }
-              log(`  ✓ ملصق ${globalIdx}: ثابت — تم التحويل لـ webp (${(result.blob.size/1024).toFixed(0)}KB)`);
-            } else if(result.kind === 'video-fallback'){
-              packHasAnimated = true; anyUnsupported = true;
-              zip.file(`${String(idx).padStart(2,'0')}_${result.name}_original.webm`, result.buf);
-              log(`  ⚠ ملصق ${globalIdx}: متحرك (فيديو webm) — اتحفظ الملف الأصلي كما هو داخل الحزمة (يحتاج تحويل خارجي لـ animated webp قبل الاستخدام في واتساب)`, 'warn');
-            } else if(result.kind === 'tgs-unsupported'){
-              packHasAnimated = true; anyUnsupported = true;
-              zip.file(`${String(idx).padStart(2,'0')}_${result.name}_original.tgs`, result.buf);
-              log(`  ⚠ ملصق ${globalIdx}: متحرك (Lottie tgs) — صيغة تليجرام الخاصة، اتحفظ كما هو (يحتاج أداة تحويل Lottie خارجية لـ animated webp)`, 'warn');
+              log(`  ✓ ملصق ${globalIdx}: ثابت — ${(result.size/1024).toFixed(0)}KB`);
+            } else if(result.kind === 'video'){
+              packHasAnimated = true;
+              anyUnsupported = true;
+              zip.file(`${String(idx).padStart(2,'0')}_${result.name}.webm`, result.buf);
+              // If we got a preview, use it for tray
+              if(result.previewBlob && !firstStaticBuf) {
+                firstStaticBuf = await result.previewBlob.arrayBuffer();
+                firstStaticMime = 'image/png';
+              }
+              log(`  ⚠ ملصق ${globalIdx}: متحرك (webm) — ${(result.size/1024).toFixed(0)}KB`, 'warn');
+            } else if(result.kind === 'tgs'){
+              packHasAnimated = true;
+              anyUnsupported = true;
+              zip.file(`${String(idx).padStart(2,'0')}_${result.name}.tgs`, result.buf);
+              log(`  ⚠ ملصق ${globalIdx}: متحرك (Lottie tgs) — ${(result.size/1024).toFixed(0)}KB`, 'warn');
             }
           }catch(e){
             log(`  ✗ ملصق ${globalIdx}: فشل — ${e.message}`, 'err');
@@ -706,9 +785,8 @@
 
         // tray.png
         if(firstStaticBuf){
-          trayBlob = await makeTrayPng(firstStaticBuf, firstStaticMime);
+          trayBlob = await makeTrayPng(firstStaticBuf, firstStaticMime || 'image/png');
         } else {
-          // fallback: plain transparent 96x96 png if all stickers were animated-only formats
           const c = document.createElement('canvas'); c.width=96;c.height=96;
           trayBlob = await new Promise(r=> c.getContext('2d') && c.toBlob(r,'image/png'));
         }
@@ -716,7 +794,7 @@
         zip.file('title.txt', partTitle);
         zip.file('author.txt', author);
 
-        log(`  ✓ تمت إضافة tray.png / title.txt ("${partTitle}") / author.txt ("${author}")`, 'ok');
+        log(`  ✓ تمت إضافة tray.png / title.txt / author.txt`, 'ok');
 
         const zipBlob = await zip.generateAsync({type:'blob'});
         const fname = sanitizeFilename(`${partTitle}`) + '.wastickers';
@@ -726,7 +804,7 @@
       setProgress(100, 'اكتمل ✓');
       log(`\n✔ تم الانتهاء! تم إنشاء ${generatedZips.length} حزمة واتساب.`, 'ok');
       if(anyUnsupported){
-        log('ملحوظة: الملصقات المتحركة من نوع tgs أو webm اتحفظت بصيغتها الأصلية جوه الحزمة لأن المتصفح مش بيقدر يحوّلها لـ animated webp مباشرة. لو الحزمة أصلاً ملصقات ثابتة (webp/png) هتتحول تلقائي وتبقى شغالة على طول.', 'warn');
+        log('ملحوظة: الملصقات المتحركة (webm/tgs) اتحفظت بصيغتها الأصلية جوه الحزمة. واتساب يدعم animated webp فقط، فممكن تحتاج تحويلها باستخدام أداة خارجية.', 'warn');
       }
 
       renderResults();
@@ -789,7 +867,6 @@
     const masterBlob = await master.generateAsync({type:'blob'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(masterBlob);
-    // this outer wrapper stays .zip since it just bundles multiple .wastickers files together
     a.download = 'whatsapp_sticker_packs.zip';
     a.click();
   });
