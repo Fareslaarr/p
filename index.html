@@ -464,17 +464,28 @@
     return data.result;
   }
 
-  async function getFileBuffer(token, fileId){
+  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  async function getFileBuffer(token, fileId, retries){
+    if(retries === undefined) retries = 3;
     const fileInfo = await tgApi(token, 'getFile', {file_id: fileId});
     const fileUrl = `https://api.telegram.org/file/bot${token}/${fileInfo.file_path}`;
-    let res;
-    try{
-      res = await fetch(fileUrl);
-    }catch(networkErr){
-      throw new Error(`فشل تحميل ملف الملصق (Failed to fetch) من ${fileInfo.file_path} — مشكلة اتصال مؤقتة، جرّب تاني.`);
+
+    let lastErr;
+    for(let attempt = 1; attempt <= retries; attempt++){
+      try{
+        const res = await fetch(fileUrl);
+        if(!res.ok) throw new Error('تعذر تحميل الملف: ' + fileInfo.file_path + ` (HTTP ${res.status})`);
+        return await res.arrayBuffer();
+      }catch(networkErr){
+        lastErr = networkErr;
+        if(attempt < retries){
+          await sleep(attempt * 800); // backoff: 800ms, 1600ms...
+          continue;
+        }
+      }
     }
-    if(!res.ok) throw new Error('تعذر تحميل الملف: ' + fileInfo.file_path + ` (HTTP ${res.status})`);
-    return await res.arrayBuffer();
+    throw new Error(`فشل تحميل ملف الملصق من ${fileInfo.file_path} بعد ${retries} محاولات — الملف على الأغلب فيديو متحرك كبير الحجم وتليجرام بيحدّ من الطلبات المتتالية. جرّب تاني أو قلل عدد الملصقات المتحركة في الحزمة.`);
   }
 
   // Convert an image (static webp/png/jpg source bytes) into a WhatsApp-compliant static webp (512x512, <100KB)
@@ -674,6 +685,7 @@
           setProgress((totalDone/totalStickers)*100, `${totalDone}/${totalStickers} ملصق`);
           try{
             const result = await processSticker(token, sticker, idx);
+            await sleep(120); // small pacing delay to avoid Telegram rate-limiting on consecutive file requests
             if(result.kind === 'static'){
               zip.file(`${String(idx).padStart(2,'0')}_${result.name}.webp`, result.blob);
               if(!firstStaticBuf){ firstStaticBuf = result.rawBuf; firstStaticMime = result.mime; }
