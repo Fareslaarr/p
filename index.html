@@ -446,8 +446,18 @@
   async function tgApi(token, method, params){
     const url = `https://api.telegram.org/bot${token}/${method}`;
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    const res = await fetch(url + qs);
-    const data = await res.json();
+    let res;
+    try{
+      res = await fetch(url + qs);
+    }catch(networkErr){
+      throw new Error(`فشل الاتصال بسيرفر تليجرام (Failed to fetch) — تأكد من اتصالك بالإنترنت، ومن إن التوكن متكوّن صح بدون مسافات زيادة، وجرّب تقفل أي VPN/إضافة حاجبة بتمنع الطلبات لـ api.telegram.org.`);
+    }
+    let data;
+    try{
+      data = await res.json();
+    }catch(parseErr){
+      throw new Error(`رد غير متوقع من تليجرام (${res.status}) — تأكد إن التوكن صحيح.`);
+    }
     if(!data.ok){
       throw new Error(data.description || ('فشل استدعاء ' + method));
     }
@@ -457,8 +467,13 @@
   async function getFileBuffer(token, fileId){
     const fileInfo = await tgApi(token, 'getFile', {file_id: fileId});
     const fileUrl = `https://api.telegram.org/file/bot${token}/${fileInfo.file_path}`;
-    const res = await fetch(fileUrl);
-    if(!res.ok) throw new Error('تعذر تحميل الملف: ' + fileInfo.file_path);
+    let res;
+    try{
+      res = await fetch(fileUrl);
+    }catch(networkErr){
+      throw new Error(`فشل تحميل ملف الملصق (Failed to fetch) من ${fileInfo.file_path} — مشكلة اتصال مؤقتة، جرّب تاني.`);
+    }
+    if(!res.ok) throw new Error('تعذر تحميل الملف: ' + fileInfo.file_path + ` (HTTP ${res.status})`);
     return await res.arrayBuffer();
   }
 
@@ -551,6 +566,21 @@
     return s.replace(/[\\/:*?"<>|]/g,'_').trim() || 'stickers';
   }
 
+  // ---- persist token & author locally so the user doesn't retype them ----
+  try{
+    const savedToken = localStorage.getItem('tg_bot_token');
+    const savedAuthor = localStorage.getItem('wa_author_name');
+    if(savedToken) botTokenEl.value = savedToken;
+    if(savedAuthor) authorEl.value = savedAuthor;
+  }catch(e){ /* localStorage unavailable, ignore */ }
+
+  botTokenEl.addEventListener('change', ()=>{
+    try{ localStorage.setItem('tg_bot_token', botTokenEl.value.trim()); }catch(e){}
+  });
+  authorEl.addEventListener('change', ()=>{
+    try{ localStorage.setItem('wa_author_name', authorEl.value.trim()); }catch(e){}
+  });
+
   let titleAutoFilled = false; // track if current value was set by us (not the user)
   let lastAutoDetectKey = '';
 
@@ -633,7 +663,7 @@
 
         const zip = new JSZip();
         let trayBlob = null;
-        let firstStaticBuf = null, firstStaticMime = null;
+        let firstStaticBuf = null, firstStaticMime = null; // reset per-chunk, so tray.png reflects THIS chunk's own first sticker
         let packHasAnimated = false;
         let idx = 0;
 
