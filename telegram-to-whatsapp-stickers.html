@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تحويل ملصقات تليجرام لواتساب</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --bg-0:#0b1410;
+    --bg-1:#0f1c16;
+    --panel:#122019;
+    --line:#1e3328;
+    --leaf:#2bb673;
+    --leaf-bright:#3ee08c;
+    --leaf-dim:#1d5c40;
+    --ink:#eaf3ec;
+    --ink-dim:#8fa89b;
+    --amber:#e0a831;
+    --err:#e05a4e;
+    --radius:14px;
+    --mono: 'JetBrains Mono', 'Courier New', monospace;
+  }
+  @font-face{
+    font-family:'Vazir';
+    src: local('Tahoma');
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, #163425 0%, transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, #0f2a1c 0%, transparent 55%),
+      var(--bg-0);
+    color:var(--ink);
+    font-family:'Segoe UI', Tahoma, Arial, sans-serif;
+    min-height:100vh;
+    line-height:1.6;
+  }
+  .wrap{
+    max-width:880px;
+    margin:0 auto;
+    padding:48px 24px 100px;
+  }
+
+  /* ---- Header / hero ---- */
+  header.hero{
+    position:relative;
+    padding-bottom:36px;
+    margin-bottom:40px;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.14em;
+    color:var(--leaf-bright);
+    text-transform:uppercase;
+    margin-bottom:18px;
+  }
+  .eyebrow .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--leaf-bright);
+    box-shadow:0 0 10px var(--leaf-bright);
+    animation:pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1; transform:scale(1);}
+    50%{opacity:.4; transform:scale(.75);}
+  }
+  h1{
+    font-size:clamp(30px,5vw,44px);
+    margin:0 0 14px;
+    font-weight:800;
+    letter-spacing:-.01em;
+    background:linear-gradient(135deg,#fff 10%, var(--leaf-bright) 90%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .sub{
+    color:var(--ink-dim);
+    font-size:16px;
+    max-width:620px;
+    margin:0;
+  }
+  .sub b{color:var(--ink); font-weight:600;}
+
+  /* stitched leaf-strip signature */
+  .strip{
+    position:absolute;
+    left:0; right:0; bottom:-1px;
+    height:3px;
+    background:repeating-linear-gradient(90deg, var(--leaf) 0 18px, transparent 18px 30px);
+    opacity:.55;
+  }
+
+  /* ---- Panels ---- */
+  .panel{
+    background:linear-gradient(180deg, var(--panel), #0e1a14);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:26px 26px 28px;
+    margin-bottom:22px;
+    position:relative;
+    overflow:hidden;
+  }
+  .panel::before{
+    content:'';
+    position:absolute; top:0; right:0; left:0; height:1px;
+    background:linear-gradient(90deg, transparent, var(--leaf-dim), transparent);
+  }
+  .panel h2{
+    display:flex; align-items:center; gap:10px;
+    font-size:14px;
+    font-family:var(--mono);
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--leaf-bright);
+    margin:0 0 18px;
+  }
+  .panel h2 .num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:22px;height:22px;
+    border:1px solid var(--leaf-dim);
+    border-radius:6px;
+    font-size:12px;
+    color:var(--leaf-bright);
+  }
+
+  label.field-label{
+    display:block;
+    font-size:13px;
+    color:var(--ink-dim);
+    margin-bottom:8px;
+  }
+  input[type=text], input[type=url]{
+    width:100%;
+    background:#0a140e;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:13px 14px;
+    color:var(--ink);
+    font-size:15px;
+    font-family:var(--mono);
+    outline:none;
+    transition:border-color .15s, box-shadow .15s;
+    direction:ltr;
+    text-align:left;
+  }
+  input[type=text]:focus, input[type=url]:focus{
+    border-color:var(--leaf);
+    box-shadow:0 0 0 3px rgba(43,182,115,.15);
+  }
+  .hint{
+    font-size:12.5px;
+    color:var(--ink-dim);
+    margin-top:8px;
+    display:flex; gap:6px; align-items:flex-start;
+  }
+  .hint a{color:var(--leaf-bright); text-decoration:none; border-bottom:1px dotted var(--leaf-dim);}
+  .hint a:hover{color:var(--leaf-bright); border-bottom-style:solid;}
+
+  .row2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+    margin-top:18px;
+  }
+  @media (max-width:600px){ .row2{grid-template-columns:1fr;} }
+
+  .checkline{
+    display:flex; align-items:center; gap:10px;
+    margin-top:16px;
+    font-size:13.5px;
+    color:var(--ink-dim);
+  }
+  .checkline input{accent-color:var(--leaf);}
+
+  button.primary{
+    margin-top:22px;
+    width:100%;
+    padding:15px 20px;
+    border:none;
+    border-radius:11px;
+    background:linear-gradient(135deg, var(--leaf), var(--leaf-dim));
+    color:#06110c;
+    font-weight:800;
+    font-size:15.5px;
+    letter-spacing:.01em;
+    cursor:pointer;
+    box-shadow:0 8px 24px -8px rgba(43,182,115,.55);
+    transition:transform .12s, box-shadow .12s, filter .12s;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  button.primary:hover{ transform:translateY(-1px); filter:brightness(1.06); }
+  button.primary:active{ transform:translateY(0); }
+  button.primary:disabled{
+    opacity:.5; cursor:not-allowed; transform:none; box-shadow:none;
+  }
+
+  /* ---- Log console ---- */
+  .console{
+    background:#070d0a;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 16px;
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:#9fd6b8;
+    max-height:260px;
+    overflow-y:auto;
+    direction:ltr;
+    text-align:left;
+    display:none;
+  }
+  .console.show{display:block;}
+  .console .line{margin:0 0 5px; white-space:pre-wrap; word-break:break-word;}
+  .console .line.err{color:var(--err);}
+  .console .line.ok{color:var(--leaf-bright);}
+  .console .line.warn{color:var(--amber);}
+
+  .progress-wrap{
+    display:none;
+    margin-top:16px;
+  }
+  .progress-wrap.show{display:block;}
+  .progress-track{
+    height:8px;
+    border-radius:6px;
+    background:#0a140e;
+    border:1px solid var(--line);
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--leaf-dim), var(--leaf-bright));
+    transition:width .25s ease;
+  }
+  .progress-label{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-dim);
+    margin-top:8px;
+    direction:ltr;
+    text-align:left;
+  }
+
+  /* ---- Results ---- */
+  #results{ display:none; }
+  #results.show{ display:block; }
+  .pack-card{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    background:#0a140e;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px 18px;
+    margin-bottom:12px;
+  }
+  .pack-thumb{
+    width:56px; height:56px;
+    border-radius:10px;
+    background:var(--bg-1);
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    overflow:hidden;
+  }
+  .pack-thumb img{width:100%; height:100%; object-fit:contain;}
+  .pack-info{flex:1; min-width:0;}
+  .pack-info .name{font-weight:700; font-size:14.5px; margin-bottom:3px;}
+  .pack-info .meta{font-size:12.5px; color:var(--ink-dim); font-family:var(--mono); direction:ltr; text-align:left; display:block;}
+  .dl-btn{
+    background:var(--leaf-dim);
+    color:var(--ink);
+    border:1px solid var(--leaf);
+    border-radius:8px;
+    padding:9px 16px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .15s;
+  }
+  .dl-btn:hover{background:var(--leaf);color:#06110c;}
+
+  .dl-all{
+    margin-top:16px;
+  }
+
+  footer{
+    margin-top:50px;
+    padding-top:24px;
+    border-top:1px solid var(--line);
+    font-size:12.5px;
+    color:var(--ink-dim);
+    text-align:center;
+  }
+
+  /* leaf watermark seam decoration */
+  .seed-icon{
+    width:34px;height:34px;
+    flex-shrink:0;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow"><span class="dot"></span> محوّل الملصقات &middot; تليجرام إلى واتساب</div>
+    <h1>حوّل حزمة ملصقاتك من تليجرام لواتساب</h1>
+    <p class="sub">حط <b>رابط حزمة الملصقات</b> بتاعت تليجرام (متحركة أو ثابتة)، والأداة هتجيب الملصقات وتظبطها بصيغة واتساب: كل <b>30 ملصق</b> في حزمة منفصلة، ومعاها <b>tray.png</b> و<b>title.txt</b> و<b>author.txt</b> جاهزين.</p>
+    <div class="strip"></div>
+  </header>
+
+  <!-- Step 1: Bot Token -->
+  <section class="panel">
+    <h2><span class="num">1</span> توكن بوت تليجرام</h2>
+    <label class="field-label">Bot Token (من BotFather)</label>
+    <input type="text" id="botToken" placeholder="123456789:AAExxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+    <div class="hint">
+      <span>💡</span>
+      <span>عايز توكن مجاني؟ افتح محادثة مع <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a> على تليجرام، ابعتله <code style="color:var(--leaf-bright)">/newbot</code> واتبع الخطوات، هيديك توكن على طول. الأداة بتستخدمه بس عشان تقرا بيانات حزمة الملصقات، مش بتعمل بيه أي حاجة تانية، والتوكن بيفضل في المتصفح بتاعك بس ومش بيتبعت لأي سيرفر غير تليجرام نفسه.</span>
+    </div>
+  </section>
+
+  <!-- Step 2: Sticker pack link -->
+  <section class="panel">
+    <h2><span class="num">2</span> رابط حزمة الملصقات</h2>
+    <label class="field-label">رابط أو اسم الحزمة</label>
+    <input type="text" id="packLink" placeholder="https://t.me/addstickers/PackName أو PackName" autocomplete="off">
+    <div class="hint"><span>🔗</span><span>ينفع تحط الرابط كامل زي <code style="color:var(--leaf-bright)">t.me/addstickers/...</code> أو اسم الحزمة لوحده.</span></div>
+
+    <div class="row2">
+      <div>
+        <label class="field-label">عنوان الملصقات (Title)</label>
+        <input type="text" id="titleBase" placeholder="هيتعبى تلقائيًا من اسم حزمة تليجرام" dir="rtl" style="font-family:inherit; text-align:right;">
+        <div class="hint"><span>✏️</span><span>بيتعبى تلقائيًا من عنوان حزمة تليجرام نفسها، وتقدر تغيّره براحتك. لو الحزمة اتقسمت لأكتر من ملف، هيتحط رقم متسلسل بعده تلقائيًا (مثلاً: العنوان 1، العنوان 2...).</span></div>
+      </div>
+      <div>
+        <label class="field-label">اسم المؤلف (Author)</label>
+        <input type="text" id="authorName" value="Zeko sticker" dir="rtl" style="font-family:inherit; text-align:right;">
+        <div class="hint"><span>🖋️</span><span>افتراضيًا "Zeko sticker"، وده ثابت في كل ملفات الحزم الناتجة، بس تقدر تغيّره لو حبيت.</span></div>
+      </div>
+    </div>
+
+    <button class="primary" id="startBtn">
+      <span id="btnLabel">ابدأ التحويل</span>
+    </button>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel">0%</div>
+    </div>
+
+    <div class="console" id="log"></div>
+  </section>
+
+  <!-- Results -->
+  <section class="panel" id="results">
+    <h2><span class="num">✓</span> حزم واتساب الجاهزة</h2>
+    <div id="packList"></div>
+    <button class="primary dl-all" id="downloadAllBtn">تحميل كل الحزم (ملف واحد)</button>
+  </section>
+
+  <footer>
+    كل التحويل بيحصل جوه متصفحك مباشرة — مفيش رفع لأي سيرفر خارجي غير تليجرام نفسه لجلب الملصقات.
+  </footer>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const botTokenEl = $('botToken');
+  const packLinkEl = $('packLink');
+  const titleBaseEl = $('titleBase');
+  const authorEl = $('authorName');
+  const startBtn = $('startBtn');
+  const btnLabel = $('btnLabel');
+  const logEl = $('log');
+  const progressWrap = $('progressWrap');
+  const progressFill = $('progressFill');
+  const progressLabel = $('progressLabel');
+  const resultsEl = $('results');
+  const packListEl = $('packList');
+  const downloadAllBtn = $('downloadAllBtn');
+
+  const CHUNK_SIZE = 30;
+  const WEBP_MAX = 512; // whatsapp static sticker max px
+  const ANIM_MAX_DURATION_MS = 10000; // whatsapp animated sticker max duration guideline
+  const TARGET_STATIC_KB = 100;
+  const TARGET_ANIM_KB = 500;
+
+  let generatedZips = []; // {name, blob, count, animated, trayDataUrl}
+
+  function log(msg, cls){
+    logEl.classList.add('show');
+    const div = document.createElement('div');
+    div.className = 'line' + (cls ? ' '+cls : '');
+    div.textContent = msg;
+    logEl.appendChild(div);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function clearLog(){
+    logEl.innerHTML = '';
+    logEl.classList.remove('show');
+  }
+
+  function setProgress(pct, label){
+    progressWrap.classList.add('show');
+    progressFill.style.width = pct + '%';
+    progressLabel.textContent = label || (Math.round(pct) + '%');
+  }
+
+  function extractPackName(input){
+    input = input.trim();
+    if(!input) return '';
+    // handle full urls: https://t.me/addstickers/Name  or tg://addstickers?set=Name
+    try{
+      if(input.includes('addstickers')){
+        if(input.includes('?set=')){
+          const u = new URL(input.replace('tg://','https://tg.fake/'));
+          return u.searchParams.get('set') || '';
+        }
+        const parts = input.split('addstickers/');
+        if(parts[1]) return parts[1].split(/[/?#]/)[0];
+      }
+      if(input.startsWith('http')){
+        const u = new URL(input);
+        const segs = u.pathname.split('/').filter(Boolean);
+        return segs[segs.length-1] || '';
+      }
+    }catch(e){ /* fall through */ }
+    // plain name
+    return input.replace(/^@/,'');
+  }
+
+  async function tgApi(token, method, params){
+    const url = `https://api.telegram.org/bot${token}/${method}`;
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    const res = await fetch(url + qs);
+    const data = await res.json();
+    if(!data.ok){
+      throw new Error(data.description || ('فشل استدعاء ' + method));
+    }
+    return data.result;
+  }
+
+  async function getFileBuffer(token, fileId){
+    const fileInfo = await tgApi(token, 'getFile', {file_id: fileId});
+    const fileUrl = `https://api.telegram.org/file/bot${token}/${fileInfo.file_path}`;
+    const res = await fetch(fileUrl);
+    if(!res.ok) throw new Error('تعذر تحميل الملف: ' + fileInfo.file_path);
+    return await res.arrayBuffer();
+  }
+
+  // Convert an image (static webp/png/jpg source bytes) into a WhatsApp-compliant static webp (512x512, <100KB)
+  function bufferToImageBitmap(buf, mime){
+    return new Promise((resolve, reject)=>{
+      const blob = new Blob([buf], {type: mime});
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = ()=>{ URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = (e)=>{ URL.revokeObjectURL(url); reject(new Error('فشل فك ترميز الصورة')); };
+      img.src = url;
+    });
+  }
+
+  async function toStaticWebp(buf, mime){
+    const img = await bufferToImageBitmap(buf, mime);
+    const canvas = document.createElement('canvas');
+    canvas.width = WEBP_MAX;
+    canvas.height = WEBP_MAX;
+    const ctx = canvas.getContext('2d');
+    // fit contain within 512x512, keep transparency
+    const scale = Math.min(WEBP_MAX / img.width, WEBP_MAX / img.height);
+    const w = img.width * scale, h = img.height * scale;
+    const x = (WEBP_MAX - w) / 2, y = (WEBP_MAX - h) / 2;
+    ctx.clearRect(0,0,WEBP_MAX,WEBP_MAX);
+    ctx.drawImage(img, x, y, w, h);
+
+    let quality = 0.9;
+    let blob = await new Promise(r => canvas.toBlob(r, 'image/webp', quality));
+    while(blob && blob.size > TARGET_STATIC_KB*1024 && quality > 0.25){
+      quality -= 0.12;
+      blob = await new Promise(r => canvas.toBlob(r, 'image/webp', quality));
+    }
+    return blob;
+  }
+
+  async function makeTrayPng(buf, mime){
+    const img = await bufferToImageBitmap(buf, mime);
+    const canvas = document.createElement('canvas');
+    canvas.width = 96; canvas.height = 96;
+    const ctx = canvas.getContext('2d');
+    const scale = Math.min(96/img.width, 96/img.height);
+    const w = img.width*scale, h = img.height*scale;
+    const x=(96-w)/2, y=(96-h)/2;
+    ctx.clearRect(0,0,96,96);
+    ctx.drawImage(img, x, y, w, h);
+    return await new Promise(r => canvas.toBlob(r, 'image/png'));
+  }
+
+  // For animated stickers (tgs = lottie-gzip, or webm video stickers) we cannot fully
+  // re-encode to animated webp in-browser without heavy codecs. Strategy:
+  // - If source is webm (video sticker): keep as .webp container isn't feasible client-side reliably,
+  //   so we extract first frame as a static fallback AND include the original webm alongside,
+  //   clearly logged, so the user (or WhatsApp Sticker Maker companion apps) can finish animated conversion if needed.
+  // - If source is .webp animated (newer telegram animated webp stickers): pass through directly since WhatsApp also uses animated webp.
+  async function processSticker(token, sticker, index){
+    const isAnimatedTgs = sticker.is_animated; // lottie .tgs
+    const isVideo = sticker.is_video; // webm video sticker
+    const buf = await getFileBuffer(token, sticker.file_id);
+
+    if(isVideo){
+      // Telegram animated webm sticker -> WhatsApp expects animated webp.
+      // Browser can't transcode webm->animated-webp without heavy libs, so we
+      // pass the raw webm through renamed as .webp is invalid; instead we keep
+      // it as an mp4/webm reference file and generate a static preview frame.
+      return { kind:'video-fallback', buf, ext:'webm', name:`sticker_${index}` };
+    }
+    if(isAnimatedTgs){
+      // .tgs is gzip-compressed Lottie JSON - cannot rasterize to webp client-side
+      // without a lottie renderer. We flag it for the user.
+      return { kind:'tgs-unsupported', buf, ext:'tgs', name:`sticker_${index}` };
+    }
+    // static image (webp/png/jpg)
+    let mime = 'image/webp';
+    const bytes = new Uint8Array(buf.slice(0,12));
+    if(bytes[0]===0x89 && bytes[1]===0x50) mime = 'image/png';
+    else if(bytes[0]===0xFF && bytes[1]===0xD8) mime = 'image/jpeg';
+    const webpBlob = await toStaticWebp(buf, mime);
+    return { kind:'static', blob: webpBlob, rawBuf: buf, mime, name:`sticker_${index}` };
+  }
+
+  function chunk(arr, size){
+    const out = [];
+    for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size));
+    return out;
+  }
+
+  function sanitizeFilename(s){
+    return s.replace(/[\\/:*?"<>|]/g,'_').trim() || 'stickers';
+  }
+
+  let titleAutoFilled = false; // track if current value was set by us (not the user)
+  let lastAutoDetectKey = '';
+
+  titleBaseEl.addEventListener('input', ()=>{
+    // once the user types anything themselves, stop auto-overwriting it
+    titleAutoFilled = false;
+  });
+
+  async function autoDetectTitle(){
+    const token = botTokenEl.value.trim();
+    const linkRaw = packLinkEl.value.trim();
+    if(!token || !linkRaw) return;
+    const packName = extractPackName(linkRaw);
+    if(!packName) return;
+
+    const key = token + '|' + packName;
+    if(key === lastAutoDetectKey) return; // avoid duplicate calls for same input
+    lastAutoDetectKey = key;
+
+    // only auto-fill if the field is empty or still holds our previous auto value
+    if(titleBaseEl.value.trim() !== '' && !titleAutoFilled) return;
+
+    try{
+      const set = await tgApi(token, 'getStickerSet', {name: packName});
+      // telegram titles often end with "by @BotName" — strip that off for a cleaner title
+      let cleanTitle = set.title.replace(/\s*by\s*@?\w+\s*$/i, '').trim();
+      titleBaseEl.value = cleanTitle || set.title;
+      titleAutoFilled = true;
+    }catch(e){
+      // silent fail here; the user will see the real error when they hit convert
+    }
+  }
+
+  packLinkEl.addEventListener('blur', autoDetectTitle);
+  botTokenEl.addEventListener('blur', autoDetectTitle);
+
+  startBtn.addEventListener('click', async ()=>{
+    clearLog();
+    resultsEl.classList.remove('show');
+    packListEl.innerHTML = '';
+    generatedZips = [];
+    setProgress(0,'يبدأ...');
+
+    const token = botTokenEl.value.trim();
+    const linkRaw = packLinkEl.value.trim();
+    const author = (authorEl.value.trim() || 'Zeko sticker');
+    let titleBase = titleBaseEl.value.trim();
+
+    if(!token){ log('لازم تدخل توكن البوت أولاً.', 'err'); return; }
+    if(!linkRaw){ log('لازم تدخل رابط حزمة الملصقات.', 'err'); return; }
+
+    const packName = extractPackName(linkRaw);
+    if(!packName){ log('تعذر استخراج اسم الحزمة من الرابط المدخل.', 'err'); return; }
+
+    startBtn.disabled = true;
+    btnLabel.textContent = 'جاري التحويل...';
+
+    try{
+      log(`جاري التحقق من التوكن وجلب بيانات الحزمة "${packName}"...`);
+      const set = await tgApi(token, 'getStickerSet', {name: packName});
+      log(`تم العثور على الحزمة: ${set.title} — عدد الملصقات: ${set.stickers.length}`, 'ok');
+
+      if(!titleBase){
+        titleBase = set.title.replace(/\s*by\s*@?\w+\s*$/i, '').trim() || set.title;
+        titleBaseEl.value = titleBase;
+        log(`تم تعبئة العنوان تلقائيًا: "${titleBase}"`);
+      }
+
+      const chunks = chunk(set.stickers, CHUNK_SIZE);
+      log(`هتتقسم لـ ${chunks.length} حزمة واتساب (كل حزمة لغاية ${CHUNK_SIZE} ملصق).`);
+
+      let totalDone = 0;
+      const totalStickers = set.stickers.length;
+      let anyUnsupported = false;
+
+      for(let ci=0; ci<chunks.length; ci++){
+        const group = chunks[ci];
+        const partTitle = chunks.length > 1 ? `${titleBase} ${ci+1}` : titleBase;
+        log(`\n— تجهيز الحزمة ${ci+1}/${chunks.length}: "${partTitle}" (${group.length} ملصق) —`);
+
+        const zip = new JSZip();
+        let trayBlob = null;
+        let firstStaticBuf = null, firstStaticMime = null;
+        let packHasAnimated = false;
+        let idx = 0;
+
+        for(const sticker of group){
+          idx++;
+          totalDone++;
+          const globalIdx = (ci*CHUNK_SIZE)+idx;
+          setProgress((totalDone/totalStickers)*100, `${totalDone}/${totalStickers} ملصق`);
+          try{
+            const result = await processSticker(token, sticker, idx);
+            if(result.kind === 'static'){
+              zip.file(`${String(idx).padStart(2,'0')}_${result.name}.webp`, result.blob);
+              if(!firstStaticBuf){ firstStaticBuf = result.rawBuf; firstStaticMime = result.mime; }
+              log(`  ✓ ملصق ${globalIdx}: ثابت — تم التحويل لـ webp (${(result.blob.size/1024).toFixed(0)}KB)`);
+            } else if(result.kind === 'video-fallback'){
+              packHasAnimated = true; anyUnsupported = true;
+              zip.file(`${String(idx).padStart(2,'0')}_${result.name}_original.webm`, result.buf);
+              log(`  ⚠ ملصق ${globalIdx}: متحرك (فيديو webm) — اتحفظ الملف الأصلي كما هو داخل الحزمة (يحتاج تحويل خارجي لـ animated webp قبل الاستخدام في واتساب)`, 'warn');
+            } else if(result.kind === 'tgs-unsupported'){
+              packHasAnimated = true; anyUnsupported = true;
+              zip.file(`${String(idx).padStart(2,'0')}_${result.name}_original.tgs`, result.buf);
+              log(`  ⚠ ملصق ${globalIdx}: متحرك (Lottie tgs) — صيغة تليجرام الخاصة، اتحفظ كما هو (يحتاج أداة تحويل Lottie خارجية لـ animated webp)`, 'warn');
+            }
+          }catch(e){
+            log(`  ✗ ملصق ${globalIdx}: فشل — ${e.message}`, 'err');
+          }
+        }
+
+        // tray.png
+        if(firstStaticBuf){
+          trayBlob = await makeTrayPng(firstStaticBuf, firstStaticMime);
+        } else {
+          // fallback: plain transparent 96x96 png if all stickers were animated-only formats
+          const c = document.createElement('canvas'); c.width=96;c.height=96;
+          trayBlob = await new Promise(r=> c.getContext('2d') && c.toBlob(r,'image/png'));
+        }
+        zip.file('tray.png', trayBlob);
+        zip.file('title.txt', partTitle);
+        zip.file('author.txt', author);
+
+        log(`  ✓ تمت إضافة tray.png / title.txt ("${partTitle}") / author.txt ("${author}")`, 'ok');
+
+        const zipBlob = await zip.generateAsync({type:'blob'});
+        const fname = sanitizeFilename(`${partTitle}`) + '.wastickers';
+        generatedZips.push({name: fname, blob: zipBlob, count: group.length, animated: packHasAnimated, trayBlob});
+      }
+
+      setProgress(100, 'اكتمل ✓');
+      log(`\n✔ تم الانتهاء! تم إنشاء ${generatedZips.length} حزمة واتساب.`, 'ok');
+      if(anyUnsupported){
+        log('ملحوظة: الملصقات المتحركة من نوع tgs أو webm اتحفظت بصيغتها الأصلية جوه الحزمة لأن المتصفح مش بيقدر يحوّلها لـ animated webp مباشرة. لو الحزمة أصلاً ملصقات ثابتة (webp/png) هتتحول تلقائي وتبقى شغالة على طول.', 'warn');
+      }
+
+      renderResults();
+
+    }catch(err){
+      log('خطأ: ' + err.message, 'err');
+    }finally{
+      startBtn.disabled = false;
+      btnLabel.textContent = 'ابدأ التحويل';
+    }
+  });
+
+  function renderResults(){
+    packListEl.innerHTML = '';
+    generatedZips.forEach((pack, i)=>{
+      const card = document.createElement('div');
+      card.className = 'pack-card';
+
+      const thumb = document.createElement('div');
+      thumb.className = 'pack-thumb';
+      if(pack.trayBlob){
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(pack.trayBlob);
+        thumb.appendChild(img);
+      }
+
+      const info = document.createElement('div');
+      info.className = 'pack-info';
+      info.innerHTML = `<div class="name">${pack.name}</div><span class="meta">${pack.count} ملصق${pack.animated ? ' • يحتوي ملفات متحركة أصلية' : ''}</span>`;
+
+      const btn = document.createElement('button');
+      btn.className = 'dl-btn';
+      btn.textContent = 'تحميل';
+      btn.onclick = ()=>{
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(pack.blob);
+        a.download = pack.name;
+        a.click();
+      };
+
+      card.appendChild(thumb);
+      card.appendChild(info);
+      card.appendChild(btn);
+      packListEl.appendChild(card);
+    });
+    resultsEl.classList.add('show');
+  }
+
+  downloadAllBtn.addEventListener('click', async ()=>{
+    if(generatedZips.length === 0) return;
+    if(generatedZips.length === 1){
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(generatedZips[0].blob);
+      a.download = generatedZips[0].name;
+      a.click();
+      return;
+    }
+    const master = new JSZip();
+    generatedZips.forEach(p => master.file(p.name, p.blob));
+    const masterBlob = await master.generateAsync({type:'blob'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(masterBlob);
+    // this outer wrapper stays .zip since it just bundles multiple .wastickers files together
+    a.download = 'whatsapp_sticker_packs.zip';
+    a.click();
+  });
+
+})();
+</script>
+</body>
+</html>
